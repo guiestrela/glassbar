@@ -62,15 +62,24 @@ Item {
   property string fontFamily: Style.font.family
   // Bound to the central Color singleton so the bar tracks shell.toml's
   // [bar] section. Property names kept for the rest of this file's bindings.
-  property color themeForeground: "#f4f7fb"
+  property color themeForeground: contrastForeground(Color.bar.background)
   property color themeContrastForeground: Color.background
-  property color transparentForeground: "#f4f7fb"
-  property color foreground: "#f4f7fb"
-  // Keep text and icons light in both glass and opaque modes.
-  property color barForeground: "#f4f7fb"
+  property color transparentForeground: Color.bar.text
+  property color foreground: themeForeground
+  // Follow the active theme: dark text on light themes and light text on dark
+  // themes, including after switching transparency modes.
+  property color barForeground: useTransparentForeground ? transparentForeground : themeForeground
   property bool foregroundAnimationEnabled: true
   property color background: Color.bar.background
   property color urgent: Color.bar.active
+
+  // Some light themes expose a light terminal foreground even though their
+  // bar surface is light. Choose the readable side of black/white from the
+  // actual bar background instead of trusting that token.
+  function contrastForeground(surface) {
+    var luminance = 0.299 * surface.r + 0.587 * surface.g + 0.114 * surface.b
+    return luminance > 0.55 ? "#1f2328" : "#f4f7fb"
+  }
 
   Behavior on barForeground { enabled: root.foregroundAnimationEnabled; ColorAnimation { duration: 420; easing.type: Easing.InOutCubic } }
   Behavior on background { ColorAnimation { duration: 420; easing.type: Easing.InOutCubic } }
@@ -830,6 +839,20 @@ Item {
 
   function refreshTransparentForeground() {
     if (!requestedTransparent || transparentForegroundProc.running) return
+
+    // A light theme must keep dark bar text even when the wallpaper beneath
+    // the translucent surface is dark; the wallpaper contrast helper would
+    // otherwise replace it with white.
+    var surface = Color.bar.background
+    var luminance = 0.299 * surface.r + 0.587 * surface.g + 0.114 * surface.b
+    if (luminance > 0.55) {
+      foregroundAnimationEnabled = false
+      transparentForeground = themeForeground
+      useTransparentForeground = true
+      transparent = true
+      restoreForegroundAnimation()
+      return
+    }
 
     transparentForegroundProc.command = [
       "omarchy-bar-text-color",
