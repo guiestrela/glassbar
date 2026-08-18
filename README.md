@@ -1,33 +1,54 @@
 # Glass Bar
 
-A darker frosted-glass replacement for the Omarchy status bar. It uses light
-text in glass mode and toggles the glass/transparency effect with a left click
-on empty center-bar space.
+A frosted-glass replacement for the Omarchy status bar. The text color follows
+the active theme automatically: dark text on light themes and light text on
+dark themes. Left-click empty center-bar space to toggle transparency.
 
 ## Install
 
 ```sh
 omarchy plugin add https://github.com/guiestrela/glassbar.git --enable
-omarchy bar use io.github.guiestrela.glassbar
 ```
 
-The repository URL above is a placeholder until the plugin is pushed to GitHub.
+The `--enable` option activates Glass Bar and makes it the active bar.
 
-This is the Quickshell implementation of the Omarchy status bar. It is
-shipped as a first-party plugin of [`omarchy-shell`](../../README.md), the
-long-running shell host. The bar is mounted at startup and lives inside
-the shell for its whole session.
+## Update
 
-- `manifest.json` declares the plugin (`id: omarchy.bar`, `kind: bar`) and points at `Bar.qml` as the entry point.
-- `Bar.qml` is Omarchy-owned bar engine code, loaded by the omarchy-shell host. Users should not edit it directly.
-- `widgets/` holds simple first-party bar widgets with sibling manifests.
-- Feature plugins such as `../panels/audio/`, `../panels/network/`, `../panels/power/`, and `../agents/` provide richer popup bar plugins.
-- The bar receives its config from the host shell as a `barConfig` property; the host loads it from `~/.config/omarchy/shell.json` (or `config/omarchy/shell.json` when the user has no file).
-- `omarchy bar position` updates only the user shell.json file.
+To update an existing installation from GitHub:
+
+```sh
+omarchy plugin update io.github.guiestrela.glassbar
+```
+
+## Remove
+
+To return to the default Omarchy bar and remove Glass Bar:
+
+```sh
+omarchy bar reset
+omarchy plugin remove io.github.guiestrela.glassbar
+```
+
+Add `--yes` to the remove command to skip the confirmation prompt. Removing
+the plugin deletes its installed checkout; it can be installed again with the
+installation command above.
+
+## How it works
+
+This is a Quickshell plugin loaded by the long-running `omarchy-shell`
+process. The plugin is declared by `manifest.json`, which uses the ID
+`io.github.guiestrela.glassbar` and the `bar` entry point in `Bar.qml`.
+
+- `manifest.json` declares the plugin (`id: io.github.guiestrela.glassbar`, `kind: bar`) and points at `Bar.qml` as the entry point.
+- `Bar.qml` contains the custom bar implementation loaded by the omarchy-shell host.
+- `widgets/` holds the bar widgets bundled with Glass Bar, with sibling manifests.
+- `indicators/` holds the indicators used by the bar.
+- The bar receives its config from the host shell as a `barConfig` property; the host loads it from `~/.config/omarchy/shell.json`.
+- Commands such as `omarchy bar position` update only the user `shell.json` file.
 
 ## Customizing
 
-The bar config lives under the `bar:` key of [`~/.config/omarchy/shell.json`](../../README.md#shelljson-shape). Out of the box the shell uses [`config/omarchy/shell.json`](../../../config/omarchy/shell.json). Once you customize anything via the bar gestures, `omarchy bar ...`, or by editing shell.json directly, your file is canonical — there is no deep-merge.
+The bar config lives under the `bar` key of `~/.config/omarchy/shell.json`. Once you customize anything via the bar gestures, `omarchy bar ...`, or by editing `shell.json` directly, your file is canonical — there is no deep-merge.
 
 The bar is configured directly on the bar itself: drag empty bar space (or click-and-hold) to move the bar to another screen edge, left-click empty center-bar space to toggle the glass/transparency effect, and drag widgets to reorder them. The `omarchy bar position`, `omarchy bar transparent`, `omarchy bar move`, and `omarchy bar set` commands do the same from scripts. Enable or disable widgets with `omarchy plugin enable` and `omarchy plugin disable` (widget ids come from `omarchy plugin list`).
 
@@ -178,7 +199,7 @@ Widgets receive `bar` (the shell root), `moduleName` (string), and `settings` (o
 - `bar.showTooltip(target, text)` / `bar.hideTooltip(target)` — shared tooltip popup
 - `bar.requestPopout(owner)` / `bar.releasePopout(owner)` — one-popup-at-a-time coordinator
 
-First-party bar widgets are manifest-backed just like third-party widgets.
+Bar widgets are manifest-backed just like other Omarchy plugins.
 Simple widgets carry sibling manifests such as `widgets/Workspaces.manifest.json`;
 richer popup plugins live in feature directories such as `../panels/audio/`,
 `../panels/network/`, and `../agents/`; and feature plugins such as
@@ -188,9 +209,8 @@ richer popup plugins live in feature directories such as `../panels/audio/`,
 `AudioPanel` and `Clock` are migrated forward; new configs should use the
 namespaced ids.
 
-Third-party widgets ship as separate plugins under
-`~/.config/omarchy/plugins/<plugin-id>/` with their own `manifest.json`
-declaring `kinds: ["bar-widget"]` and a `barWidget` entry point. See
-[../../README.md](../../README.md) for the manifest schema. Rescan, enable,
-and place third-party plugins with `omarchy-shell shell rescanPlugins`,
-`omarchy plugin enable`, and `omarchy bar move`.
+Third-party widgets can be installed under
+`~/.config/omarchy/plugins/<plugin-id>/` with their own `manifest.json`.
+After installing one, rescan, enable, and place it with
+`omarchy-shell shell rescanPlugins`, `omarchy plugin enable`, and
+`omarchy bar move`.
