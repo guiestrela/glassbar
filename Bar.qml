@@ -64,7 +64,7 @@ Item {
   // [bar] section. Property names kept for the rest of this file's bindings.
   property color themeForeground: contrastForeground(Color.bar.background)
   property color themeContrastForeground: Color.background
-  property color transparentForeground: Color.bar.text
+  property color transparentForeground: themeForeground
   property color foreground: themeForeground
   // Follow the active theme: dark text on light themes and light text on dark
   // themes, including after switching transparency modes.
@@ -838,30 +838,16 @@ Item {
   }
 
   function refreshTransparentForeground() {
-    if (!requestedTransparent || transparentForegroundProc.running) return
+    if (!requestedTransparent) return
 
-    // A light theme must keep dark bar text even when the wallpaper beneath
-    // the translucent surface is dark; the wallpaper contrast helper would
-    // otherwise replace it with white.
-    var surface = Color.bar.background
-    var luminance = 0.299 * surface.r + 0.587 * surface.g + 0.114 * surface.b
-    if (luminance > 0.55) {
-      foregroundAnimationEnabled = false
-      transparentForeground = themeForeground
-      useTransparentForeground = true
-      transparent = true
-      restoreForegroundAnimation()
-      return
-    }
-
-    transparentForegroundProc.command = [
-      "omarchy-bar-text-color",
-      root.position,
-      String(root.barSize),
-      colorHex(root.themeForeground),
-      colorHex(root.themeContrastForeground)
-    ]
-    transparentForegroundProc.running = true
+    // Glass mode follows the theme too. Do not use the wallpaper contrast
+    // helper here: it can turn text dark on a dark theme or light on a light
+    // theme depending on the image behind the bar.
+    foregroundAnimationEnabled = false
+    transparentForeground = themeForeground
+    useTransparentForeground = true
+    transparent = true
+    restoreForegroundAnimation()
   }
 
   onRequestedTransparentChanged: scheduleTransparentForegroundRefresh()
