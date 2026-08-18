@@ -62,15 +62,12 @@ Item {
   property string fontFamily: Style.font.family
   // Bound to the central Color singleton so the bar tracks shell.toml's
   // [bar] section. Property names kept for the rest of this file's bindings.
-  property color themeForeground: Color.bar.text
+  property color themeForeground: "#f4f7fb"
   property color themeContrastForeground: Color.background
-  property color transparentForeground: Color.bar.text
-  property color foreground: themeForeground
-  // Glass mode uses a fixed light foreground for readable text/icons over
-  // dark and translucent backgrounds.
-  property color barForeground: requestedTransparent
-    ? "#f4f7fb"
-    : themeForeground
+  property color transparentForeground: "#f4f7fb"
+  property color foreground: "#f4f7fb"
+  // Keep text and icons light in both glass and opaque modes.
+  property color barForeground: "#f4f7fb"
   property bool foregroundAnimationEnabled: true
   property color background: Color.bar.background
   property color urgent: Color.bar.active
