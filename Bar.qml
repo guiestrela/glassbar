@@ -65,10 +65,13 @@ Item {
   property color themeForeground: contrastForeground(Color.bar.background)
   property color themeContrastForeground: Color.background
   property color transparentForeground: themeForeground
-  property color foreground: themeForeground
   // Follow the active theme: dark text on light themes and light text on dark
   // themes, including after switching transparency modes.
   property color barForeground: useTransparentForeground ? transparentForeground : themeForeground
+  // Public widget-facing color. Keep it bound to the effective foreground so
+  // widgets using `bar.foreground` also update when the theme or transparency
+  // mode changes.
+  property color foreground: barForeground
   property bool foregroundAnimationEnabled: true
   property color background: Color.bar.background
   property color urgent: Color.bar.active
