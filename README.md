@@ -6,6 +6,9 @@ dark themes. It updates live when the theme changes, including the text and
 icons rendered by bar widgets. Left-click empty center-bar space to toggle
 transparency.
 
+<img width="2560" height="50" alt="image" src="https://github.com/user-attachments/assets/99176fea-6833-4669-aae2-295738fb8aef" />
+
+
 ## Install
 
 ```sh
