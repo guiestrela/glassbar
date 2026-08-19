@@ -2,7 +2,9 @@
 
 A frosted-glass replacement for the Omarchy status bar. The text color follows
 the active theme automatically: dark text on light themes and light text on
-dark themes. Left-click empty center-bar space to toggle transparency.
+dark themes. It updates live when the theme changes, including the text and
+icons rendered by bar widgets. Left-click empty center-bar space to toggle
+transparency.
 
 ## Install
 
@@ -45,6 +47,13 @@ process. The plugin is declared by `manifest.json`, which uses the ID
 - `indicators/` holds the indicators used by the bar.
 - The bar receives its config from the host shell as a `barConfig` property; the host loads it from `~/.config/omarchy/shell.json`.
 - Commands such as `omarchy bar position` update only the user `shell.json` file.
+
+### Theme-aware text color
+
+Glass Bar reads the active theme's `bar.text` color through Omarchy's shared
+color palette. Changing themes updates the bar text and widget foregrounds
+without requiring a plugin reinstall. Custom widgets can use `bar.foreground`
+to inherit the same live-updating color.
 
 ## Customizing
 
