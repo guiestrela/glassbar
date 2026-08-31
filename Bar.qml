@@ -62,9 +62,9 @@ Item {
   property string fontFamily: Style.font.family
   // Bound to the central Color singleton so the bar tracks shell.toml's
   // [bar] section. Property names kept for the rest of this file's bindings.
-  property color themeForeground: Color.bar.text
+  property color themeForeground: Color.bar && Color.bar.text ? Color.bar.text : Color.foreground
   property color themeContrastForeground: Color.background
-  property color transparentForeground: Color.bar.text
+  property color transparentForeground: themeForeground
   // Follow the active theme: dark text on light themes and light text on dark
   // themes, including after switching transparency modes.
   property color barForeground: useTransparentForeground ? transparentForeground : themeForeground
@@ -1806,7 +1806,7 @@ Item {
     keepSpace: setting("keepSpace", false) === true
     horizontalMargin: Number(setting("horizontalMargin", 7.5))
     verticalPadding: Number(setting("verticalPadding", 6))
-    fontSize: Number(setting("fontSize", 12))
+    fontSize: Number(setting("fontSize", Style.font.body))
 
     onPressed: function(button) {
       var command = ""

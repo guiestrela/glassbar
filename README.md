@@ -58,6 +58,21 @@ color palette. Changing themes updates the bar text and widget foregrounds
 without requiring a plugin reinstall. Custom widgets can use `bar.foreground`
 to inherit the same live-updating color.
 
+### Fonts
+
+Glass Bar follows Omarchy's active monospace font through `Style.font.family`.
+Widgets receive the same value through `bar.fontFamily`, so changing the system
+font with `omarchy-font-set` updates the bar and its tooltips without editing the
+plugin or `shell.json`.
+
+### Security
+
+Custom QML modules are executable code and are limited to
+`~/.config/omarchy/bar/modules/` and `~/.config/omarchy/plugins/`. Paths with
+parent-directory traversal or non-QML extensions are ignored. Command modules
+remain an explicit advanced feature: their `exec` and click-action values are
+run by the user's shell, so only use commands from configuration you trust.
+
 ## Customizing
 
 The bar config lives under the `bar` key of `~/.config/omarchy/shell.json`. Once you customize anything via the bar gestures, `omarchy bar ...`, or by editing `shell.json` directly, your file is canonical — there is no deep-merge.
@@ -167,7 +182,9 @@ QML module:
 }
 ```
 
-Then create `~/.config/omarchy/bar/modules/gpu.qml`. If you want to store it elsewhere, add a `source` path.
+Then create `~/.config/omarchy/bar/modules/gpu.qml`. If you want to store it in
+another allowed user module directory, add a `source` path under
+`~/.config/omarchy/bar/modules/` or `~/.config/omarchy/plugins/`.
 
 Custom QML modules should be an `Item` with `implicitWidth` and `implicitHeight`. They may optionally define these properties, which the bar fills after loading:
 

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.guiestrela.glassbar",
   "name": "Glass Bar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Guiestrela",
   "license": "MIT",
-  "description": "A darker frosted-glass Omarchy bar with light text and left-click transparency toggle.",
+  "description": "A theme-aware frosted-glass Omarchy bar with secure custom module paths and live font support.",
   "kinds": [
     "bar"
   ],

@@ -109,6 +109,31 @@ function expandPath(value, home) {
   return path
 }
 
+function pathUnder(path, root) {
+  var value = String(path || "").replace(/\\/g, "/").replace(/\/+$/, "")
+  var base = String(root || "").replace(/\\/g, "/").replace(/\/+$/, "")
+  return value === base || value.indexOf(base + "/") === 0
+}
+
+// Custom QML is executable code. Keep shell.json from making the bar load
+// arbitrary files while preserving the documented per-user module locations.
+function safeCustomModulePath(source, home, configDir) {
+  var path = String(source || "")
+  if (!path || path.indexOf("\0") !== -1 || !/\.qml$/i.test(path)) return ""
+
+  var segments = path.replace(/\\/g, "/").split("/")
+  for (var i = 0; i < segments.length; i++) {
+    if (segments[i] === "..") return ""
+  }
+
+  var userConfig = String(configDir || "")
+  var allowedRoots = [userConfig + "/bar/modules", userConfig + "/plugins"]
+  for (var r = 0; r < allowedRoots.length; r++) {
+    if (pathUnder(path, allowedRoots[r])) return path
+  }
+  return ""
+}
+
 function customModuleSafeName(name) {
   var value = String(name || "")
   return value !== "" && value.indexOf("..") === -1 && value[0] !== "/"
@@ -126,7 +151,7 @@ function customModuleType(entry) {
 function customModulePath(entry, home, configDir) {
   var settings = entrySettings(entry)
   var name = entryId(entry)
-  var source = settings.source ? expandPath(settings.source, home) : ""
+  var source = settings.source ? safeCustomModulePath(expandPath(settings.source, home), home, configDir) : ""
   if (!source && customModuleSafeName(name))
     source = String(configDir || "") + "/bar/modules/" + String(name) + ".qml"
   return source
@@ -224,6 +249,7 @@ if (typeof module !== "undefined") {
     entriesAfter: entriesAfter,
     inlineSettingsDelta: inlineSettingsDelta,
     expandPath: expandPath,
+    safeCustomModulePath: safeCustomModulePath,
     customModuleSafeName: customModuleSafeName,
     customModuleType: customModuleType,
     customModulePath: customModulePath
