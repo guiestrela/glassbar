@@ -10,6 +10,8 @@ transparency.
 
 <img width="2560" height="50" alt="image" src="https://github.com/user-attachments/assets/99176fea-6833-4669-aae2-295738fb8aef" />
 
+![Glass Bar preview](preview.png)
+
 
 ## Install
 
