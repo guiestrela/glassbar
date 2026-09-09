@@ -9,13 +9,9 @@ QtObject {
   property var baseShell: null
   property string ownerPluginId: ""
   property var ownerService: null
-  property var mediaService: null
-  property var serviceOverrides: ({})
 
   function serviceFor(id) {
     var key = String(id || "")
-    if (serviceOverrides && serviceOverrides[key]) return serviceOverrides[key]
-    if (key === "crmne.mpris") return mediaService
     if (key === ownerPluginId && ownerService) return ownerService
     return baseShell && typeof baseShell.serviceFor === "function"
       ? baseShell.serviceFor(key) : null

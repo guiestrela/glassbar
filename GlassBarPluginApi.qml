@@ -2,8 +2,8 @@ import QtQuick
 
 // Public bar surface for third-party widgets hosted by Glass Bar. It mirrors
 // the normal widget-facing API while keeping the replacement bar's root out
-// of the plugin. The extra geometry helpers preserve adaptive widgets such as
-// crmne.mpris when they are running under this facade.
+// of the plugin. The geometry helpers preserve adaptive widgets under this
+// facade.
 QtObject {
   id: root
 

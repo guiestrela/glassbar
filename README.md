@@ -1,5 +1,7 @@
 # Glass Bar
 
+Version: `1.3.1`
+
 A frosted-glass replacement for the Omarchy status bar. The text color follows
 the active theme automatically: dark text on light themes and light text on
 dark themes. It updates live when the theme changes, including the text and
@@ -73,14 +75,7 @@ parent-directory traversal or non-QML extensions are ignored. Command modules
 remain an explicit advanced feature: their `exec` and click-action values are
 run by the user's shell, so only use commands from configuration you trust.
 
-### Media plugin compatibility
-
-Glass Bar includes a compatibility bridge for the original `crmne.mpris`
-plugin. The bridge reads Quickshell's shared MPRIS players and exposes the
-plugin's expected media service, so a fresh Glass Bar installation does not
-require manual edits to the installed media plugin.
-
-### Third-party service compatibility
+### Plugin service compatibility
 
 Glass Bar provides a generic bridge for third-party plugins that declare both
 `bar-widget` and `service` kinds. Omarchy 4.0.x removes the private
@@ -89,7 +84,7 @@ reads the plugin's validated manifest from its user plugin directory, restores
 that private path, and exposes the resulting service only to its owning widget.
 Plugins without a service continue to use the normal bar surface. The generic
 path is driven entirely by manifest metadata and contains no plugin-specific
-IDs.
+IDs or service adapters.
 
 ## Customizing
 
