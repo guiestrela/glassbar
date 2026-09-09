@@ -1,13 +1,14 @@
 import QtQuick
 
-// Capability bridge used by the Glass Bar compatibility facade. Replacement
-// bars receive a scoped shell from Omarchy, so a widget cannot look up another
-// plugin's service through it. Compatibility adapters may provide an explicit
-// service override while all other calls stay delegated to the host facade.
+// Capability bridge used by the Glass Bar compatibility facade. A widget gets
+// the shell scoped to its own plugin; compatibility bridges may also provide
+// that plugin's service when the host omitted it from the public shell.
 QtObject {
   id: root
 
   property var baseShell: null
+  property string ownerPluginId: ""
+  property var ownerService: null
   property var mediaService: null
   property var serviceOverrides: ({})
 
@@ -15,6 +16,7 @@ QtObject {
     var key = String(id || "")
     if (serviceOverrides && serviceOverrides[key]) return serviceOverrides[key]
     if (key === "crmne.mpris") return mediaService
+    if (key === ownerPluginId && ownerService) return ownerService
     return baseShell && typeof baseShell.serviceFor === "function"
       ? baseShell.serviceFor(key) : null
   }
