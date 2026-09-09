@@ -107,6 +107,11 @@ Item {
   property var moduleSlots: []
   property var mediaCompatService: null
   property var mediaCompatApis: ({})
+  property var localSendCompatComponent: null
+  property var localSendCompatService: null
+  property var localSendCompatShell: null
+  property var localSendCompatApi: null
+  property string localSendCompatServiceUrl: ""
 
   Component {
     id: mediaCompatServiceComponent
@@ -179,6 +184,116 @@ Item {
     next[id] = api
     mediaCompatApis = next
     return api
+  }
+
+  // Omarchy intentionally removes __sourceDir from third-party service
+  // manifests. bredda.localsend uses that field to locate its controller, so
+  // keep one narrow adapter for the installed plugin while it still exposes a
+  // bar widget. The source directory comes from the host's already-validated
+  // widget metadata and is restricted to the expected user plugin location.
+  function localSendCompatSourceDir() {
+    var registry = root.barWidgetRegistry
+    if (!registry || typeof registry.metadataFor !== "function") return ""
+    var metadata = registry.metadataFor("bredda.localsend")
+    if (!metadata || String(metadata.pluginId || "") !== "bredda.localsend") return ""
+
+    var source = String(metadata.sourceDir || "").replace(/\/+$/, "")
+    var expected = String(root.home || "") + "/.config/omarchy/plugins/bredda.localsend"
+    return source === expected ? source : ""
+  }
+
+  function updateLocalSendCompatShell() {
+    if (!localSendCompatShell) return
+    localSendCompatShell.baseShell = root.shell
+    var overrides = ({})
+    if (localSendCompatService) overrides["bredda.localsend"] = localSendCompatService
+    localSendCompatShell.serviceOverrides = overrides
+  }
+
+  function clearLocalSendCompatService() {
+    if (localSendCompatService && typeof localSendCompatService.destroy === "function")
+      localSendCompatService.destroy()
+    localSendCompatService = null
+    localSendCompatComponent = null
+    localSendCompatServiceUrl = ""
+    updateLocalSendCompatShell()
+  }
+
+  function ensureLocalSendCompatService() {
+    var sourceDir = localSendCompatSourceDir()
+    if (!sourceDir) {
+      if (localSendCompatService || localSendCompatComponent) clearLocalSendCompatService()
+      return null
+    }
+
+    var serviceUrl = Util.fileUrl(sourceDir + "/service/Receiver.qml")
+    if (localSendCompatService && localSendCompatServiceUrl === serviceUrl) return localSendCompatService
+    if (localSendCompatComponent && localSendCompatServiceUrl === serviceUrl) return null
+
+    if (localSendCompatService) clearLocalSendCompatService()
+    localSendCompatServiceUrl = serviceUrl
+
+    var component = Qt.createComponent(serviceUrl, Component.PreferSynchronous)
+    localSendCompatComponent = component
+
+    function finalize() {
+      if (localSendCompatComponent !== component || component.status === Component.Loading) return
+      localSendCompatComponent = null
+      if (component.status !== Component.Ready) {
+        console.warn("LocalSend compatibility service failed to load: " + component.errorString())
+        return
+      }
+
+      var service = component.createObject(root, {
+        // This is the private value the host strips before injecting the
+        // public manifest into third-party services.
+        manifest: {
+          id: "bredda.localsend",
+          __sourceDir: sourceDir
+        }
+      })
+      if (!service) {
+        console.warn("LocalSend compatibility service returned null")
+        return
+      }
+      localSendCompatService = service
+      updateLocalSendCompatShell()
+    }
+
+    if (component.status === Component.Loading) component.statusChanged.connect(finalize)
+    else finalize()
+    return localSendCompatService
+  }
+
+  function localSendCompatApiFor(moduleName) {
+    ensureLocalSendCompatService()
+    var id = String(moduleName || "")
+    if (localSendCompatApi) {
+      localSendCompatApi.sourceBar = root
+      updateLocalSendCompatShell()
+      return localSendCompatApi
+    }
+
+    localSendCompatShell = mediaCompatShellComponent.createObject(root, {
+      baseShell: root.shell,
+      serviceOverrides: ({})
+    })
+    localSendCompatApi = mediaCompatApiComponent.createObject(root, {
+      sourceBar: root,
+      shell: localSendCompatShell,
+      pluginId: id,
+      moduleName: id
+    })
+    if (!localSendCompatApi) return root
+    updateLocalSendCompatShell()
+    return localSendCompatApi
+  }
+
+  function widgetApiFor(moduleName) {
+    var id = String(moduleName || "")
+    if (id === "crmne.mpris") return mediaCompatApiFor(id)
+    if (id === "bredda.localsend") return localSendCompatApiFor(id)
+    return root
   }
 
   function debugBarGeometry() {
@@ -635,7 +750,15 @@ Item {
     return source ? Util.fileUrl(source) : ""
   }
 
-  Component.onCompleted: applyBarConfig()
+  Component.onCompleted: {
+    applyBarConfig()
+    Qt.callLater(function() { root.ensureLocalSendCompatService() })
+  }
+
+  Connections {
+    target: root.barWidgetRegistry
+    function onRevisionChanged() { root.ensureLocalSendCompatService() }
+  }
 
   // Revealing the indicators widens their section, which can slide a neighbour
   // under a stationary pointer. Collapsing on that un-hover would move it back
@@ -1815,11 +1938,12 @@ Item {
     function injectProps() {
       var target = activeItem
       if (!target) return
-      if ("bar" in target) target.bar = root.mediaCompatApiFor(moduleName)
+      if ("bar" in target) target.bar = root.widgetApiFor(moduleName)
       if ("moduleName" in target) target.moduleName = moduleName
       if ("settings" in target) target.settings = moduleSettings
       var api = mediaCompatApis[moduleName]
       if (api && api.shell) api.shell.baseShell = root.shell
+      if (moduleName === "bredda.localsend") updateLocalSendCompatShell()
     }
 
     Component {

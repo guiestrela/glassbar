@@ -80,6 +80,15 @@ plugin. The bridge reads Quickshell's shared MPRIS players and exposes the
 plugin's expected media service, so a fresh Glass Bar installation does not
 require manual edits to the installed media plugin.
 
+### LocalSend compatibility
+
+Glass Bar also includes a narrow compatibility bridge for `bredda.localsend`.
+Omarchy 4.0.x removes the private `__sourceDir` field before injecting a
+third-party service manifest, while LocalSend 2.0.4 uses that field to locate
+its controller. When the LocalSend widget is enabled, Glass Bar starts the
+plugin service with its validated user-plugin directory and exposes it only to
+that widget. No changes to the installed LocalSend files are required.
+
 ## Customizing
 
 The bar config lives under the `bar` key of `~/.config/omarchy/shell.json`. Once you customize anything via the bar gestures, `omarchy bar ...`, or by editing `shell.json` directly, your file is canonical — there is no deep-merge.

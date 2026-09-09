@@ -1,18 +1,19 @@
 import QtQuick
 
-// Capability bridge used by the Glass Bar compatibility facade. The host
-// shell intentionally gives replacement bars a service-less shell surface;
-// crmne.mpris is the one legacy widget that expects its own service through
-// bar.shell.serviceFor(). Keep the bridge narrow and delegate everything else
-// to the shell facade supplied by Omarchy.
+// Capability bridge used by the Glass Bar compatibility facade. Replacement
+// bars receive a scoped shell from Omarchy, so a widget cannot look up another
+// plugin's service through it. Compatibility adapters may provide an explicit
+// service override while all other calls stay delegated to the host facade.
 QtObject {
   id: root
 
   property var baseShell: null
   property var mediaService: null
+  property var serviceOverrides: ({})
 
   function serviceFor(id) {
     var key = String(id || "")
+    if (serviceOverrides && serviceOverrides[key]) return serviceOverrides[key]
     if (key === "crmne.mpris") return mediaService
     return baseShell && typeof baseShell.serviceFor === "function"
       ? baseShell.serviceFor(key) : null
