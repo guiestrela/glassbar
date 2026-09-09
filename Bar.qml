@@ -105,6 +105,23 @@ Item {
   property var barMoveScreen: null
   property var clickTargets: []
   property var moduleSlots: []
+  property var mediaCompatService: null
+  property var mediaCompatApis: ({})
+
+  Component {
+    id: mediaCompatServiceComponent
+    MprisCompatService { }
+  }
+
+  Component {
+    id: mediaCompatShellComponent
+    GlassBarPluginShell { }
+  }
+
+  Component {
+    id: mediaCompatApiComponent
+    GlassBarPluginApi { }
+  }
 
   function registerClickTarget(target) {
     if (!target || clickTargets.indexOf(target) !== -1) return
@@ -128,6 +145,40 @@ Item {
   function unregisterModuleSlot(slot) {
     var next = moduleSlots.filter(function(item) { return item !== slot })
     moduleSlots = next
+  }
+
+  function mediaCompatApiFor(moduleName) {
+    var id = String(moduleName || "")
+    if (id !== "crmne.mpris") return root
+
+    if (!mediaCompatService) {
+      mediaCompatService = mediaCompatServiceComponent.createObject(root)
+    }
+
+    var api = mediaCompatApis[id]
+    if (api) {
+      api.sourceBar = root
+      if (api.shell) api.shell.baseShell = root.shell
+      return api
+    }
+
+    var shell = mediaCompatShellComponent.createObject(root, {
+      baseShell: root.shell,
+      mediaService: mediaCompatService
+    })
+    api = mediaCompatApiComponent.createObject(root, {
+      sourceBar: root,
+      shell: shell,
+      pluginId: id,
+      moduleName: id
+    })
+    if (!api) return root
+
+    var next = ({})
+    for (var key in mediaCompatApis) next[key] = mediaCompatApis[key]
+    next[id] = api
+    mediaCompatApis = next
+    return api
   }
 
   function debugBarGeometry() {
@@ -1764,9 +1815,11 @@ Item {
     function injectProps() {
       var target = activeItem
       if (!target) return
-      if ("bar" in target) target.bar = root
+      if ("bar" in target) target.bar = root.mediaCompatApiFor(moduleName)
       if ("moduleName" in target) target.moduleName = moduleName
       if ("settings" in target) target.settings = moduleSettings
+      var api = mediaCompatApis[moduleName]
+      if (api && api.shell) api.shell.baseShell = root.shell
     }
 
     Component {

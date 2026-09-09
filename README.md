@@ -73,6 +73,13 @@ parent-directory traversal or non-QML extensions are ignored. Command modules
 remain an explicit advanced feature: their `exec` and click-action values are
 run by the user's shell, so only use commands from configuration you trust.
 
+### Media plugin compatibility
+
+Glass Bar includes a compatibility bridge for the original `crmne.mpris`
+plugin. The bridge reads Quickshell's shared MPRIS players and exposes the
+plugin's expected media service, so a fresh Glass Bar installation does not
+require manual edits to the installed media plugin.
+
 ## Customizing
 
 The bar config lives under the `bar` key of `~/.config/omarchy/shell.json`. Once you customize anything via the bar gestures, `omarchy bar ...`, or by editing `shell.json` directly, your file is canonical — there is no deep-merge.
