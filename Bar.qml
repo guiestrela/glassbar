@@ -928,6 +928,8 @@ Item {
       restoreForegroundAnimation()
       return
     }
+    useTransparentForeground = true
+    transparent = true
     scheduleTransparentForegroundRefresh()
   }
 
