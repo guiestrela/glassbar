@@ -40,3 +40,13 @@ test("position choices include all four screen edges in menu order", () => {
     { value: "right", label: "Direita" }
   ]))
 })
+
+test("bar length presets provide full, 90%, and 80% screen spans", () => {
+  assert.equal(model.normalizeBarLength("full"), "full")
+  assert.equal(model.normalizeBarLength("wide"), "wide")
+  assert.equal(model.normalizeBarLength("compact"), "compact")
+  assert.equal(model.normalizeBarLength("unknown"), "full")
+  assert.equal(model.barLengthRatio("full"), 1)
+  assert.equal(model.barLengthRatio("wide"), 0.9)
+  assert.equal(model.barLengthRatio("compact"), 0.8)
+})

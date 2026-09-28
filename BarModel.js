@@ -26,6 +26,16 @@ function normalizeBarShape(value) {
   return /^(square|rounded|pill)$/.test(next) ? next : "rounded"
 }
 
+function normalizeBarLength(value) {
+  var next = String(value || "").trim()
+  return /^(full|wide|compact)$/.test(next) ? next : "full"
+}
+
+function barLengthRatio(value) {
+  var preset = normalizeBarLength(value)
+  return preset === "wide" ? 0.9 : preset === "compact" ? 0.8 : 1
+}
+
 function barSizeForPreset(preset, baseSize) {
   var size = Number(baseSize)
   if (!isFinite(size) || size <= 0) size = 1
@@ -280,6 +290,8 @@ if (typeof module !== "undefined") {
     barPositionOptions: barPositionOptions,
     normalizeBarSize: normalizeBarSize,
     normalizeBarShape: normalizeBarShape,
+    normalizeBarLength: normalizeBarLength,
+    barLengthRatio: barLengthRatio,
     barSizeForPreset: barSizeForPreset,
     barRadiusForShape: barRadiusForShape,
     entrySettings: entrySettings,

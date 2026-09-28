@@ -38,6 +38,9 @@ Item {
   property string omarchyConfigDir: home + "/.config/omarchy"
   property var fallbackBarConfig: ({
     position: "top",
+    size: "standard",
+    shape: "rounded",
+    length: "full",
     transparent: false,
     centerAnchor: "omarchy.clock",
     layout: { left: [], center: [], right: [] }
@@ -61,6 +64,7 @@ Item {
   property string position: "top"
   property string sizePreset: "standard"
   property string shapePreset: "rounded"
+  property string lengthPreset: "full"
   // Resolves through fontconfig at paint time (Style.font.family defaults
   // to "monospace"), so changing the system font (via `omarchy-font-set`)
   // updates the bar without a reload.
@@ -418,7 +422,9 @@ Item {
   function setBarAppearance(key, value) {
     var next = key === "size"
       ? BarModel.normalizeBarSize(value)
-      : BarModel.normalizeBarShape(value)
+      : key === "shape"
+        ? BarModel.normalizeBarShape(value)
+        : BarModel.normalizeBarLength(value)
     if (root.shell && typeof root.shell.mutateShellConfig === "function") {
       root.shell.mutateShellConfig(function(config) {
         if (!Util.isPlainObject(config.bar)) config.bar = {}
@@ -426,8 +432,10 @@ Item {
       })
     } else if (key === "size") {
       root.sizePreset = next
-    } else {
+    } else if (key === "shape") {
       root.shapePreset = next
+    } else {
+      root.lengthPreset = next
     }
   }
 
@@ -462,6 +470,8 @@ Item {
     sizePreset,
     vertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal)
 
+  readonly property real barLengthRatio: BarModel.barLengthRatio(lengthPreset)
+
   function barCornerRadius(extent) {
     return BarModel.barRadiusForShape(shapePreset, extent, Style.cornerRadius)
   }
@@ -495,6 +505,7 @@ Item {
     position = normalizePosition(config.position)
     sizePreset = BarModel.normalizeBarSize(config.size)
     shapePreset = BarModel.normalizeBarShape(config.shape)
+    lengthPreset = BarModel.normalizeBarLength(config.length)
     setRequestedTransparency(config.transparent === true)
     centerAnchor = Util.canonicalWidgetId(config.centerAnchor || "")
 
@@ -1148,11 +1159,17 @@ Item {
       window: barWindow
     }
 
+    readonly property int screenSpan: root.vertical
+      ? (screen ? screen.height : 0)
+      : (screen ? screen.width : 0)
+    readonly property int lengthInset: Math.max(0,
+      Math.round(screenSpan * (1 - root.barLengthRatio) / 2))
+
     margins {
-      top: root.barHidden && root.position === "top" ? -root.barSize : 0
-      bottom: root.barHidden && root.position === "bottom" ? -root.barSize : 0
-      left: root.barHidden && root.position === "left" ? -root.barSize : 0
-      right: root.barHidden && root.position === "right" ? -root.barSize : 0
+      top: root.barHidden && root.position === "top" ? -root.barSize : (root.vertical ? lengthInset : 0)
+      bottom: root.barHidden && root.position === "bottom" ? -root.barSize : (root.vertical ? lengthInset : 0)
+      left: root.barHidden && root.position === "left" ? -root.barSize : (root.vertical ? 0 : lengthInset)
+      right: root.barHidden && root.position === "right" ? -root.barSize : (root.vertical ? 0 : lengthInset)
     }
 
     anchors {
@@ -1723,6 +1740,56 @@ Item {
                   cursorShape: Qt.PointingHandCursor
                   onClicked: {
                     root.setBarPosition(modelData.value)
+                    appearanceControl.menuOpen = false
+                  }
+                }
+              }
+            }
+          }
+
+          Text {
+            text: root.vertical ? "Comprimento" : "Largura"
+            color: root.foreground
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.body
+            font.bold: true
+          }
+
+          Grid {
+            columns: 3
+            spacing: Style.space(4)
+
+            Repeater {
+              model: [
+                { value: "full", label: "100%" },
+                { value: "wide", label: "90%" },
+                { value: "compact", label: "80%" }
+              ]
+
+              delegate: Rectangle {
+                required property var modelData
+                width: (appearanceOptions.width - 2 * Style.space(4)) / 3
+                height: Style.space(26)
+                radius: Style.space(4)
+                color: lengthMouse.containsMouse || root.lengthPreset === modelData.value
+                  ? Style.hoverFillFor(root.foreground, root.foreground) : "transparent"
+
+                Text {
+                  anchors.centerIn: parent
+                  text: modelData.label
+                  color: root.foreground
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.body
+                  font.bold: root.lengthPreset === modelData.value
+                }
+
+                MouseArea {
+                  id: lengthMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    root.setBarAppearance("length", modelData.value)
                     appearanceControl.menuOpen = false
                   }
                 }

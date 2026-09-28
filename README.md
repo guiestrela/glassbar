@@ -92,7 +92,7 @@ IDs or service adapters.
 
 The bar config lives under the `bar` key of `~/.config/omarchy/shell.json`. Once you customize anything via the bar gestures, `omarchy bar ...`, or by editing `shell.json` directly, your file is canonical — there is no deep-merge.
 
-The bar is configured directly on the bar itself: drag empty bar space (or click-and-hold) to move the bar to another screen edge, left-click empty center-bar space to toggle the glass/transparency effect, and drag widgets to reorder them. Use the sliders button at the far end of the bar to choose its position (top, bottom, left, or right), compact/standard/large thickness, and square/rounded/pill-shaped surface; selections are saved in `shell.json`. The `omarchy bar position`, `omarchy bar transparent`, `omarchy bar move`, and `omarchy bar set` commands do the same from scripts. Enable or disable widgets with `omarchy plugin enable` and `omarchy plugin disable` (widget ids come from `omarchy plugin list`).
+The bar is configured directly on the bar itself: drag empty bar space (or click-and-hold) to move the bar to another screen edge, left-click empty center-bar space to toggle the glass/transparency effect, and drag widgets to reorder them. Use the sliders button at the far end of the bar to choose its position (top, bottom, left, or right), screen span (100%, 90%, or 80%), thickness (compact, standard, or large), and surface shape (square, rounded, or pill); selections are saved in `shell.json`. For top/bottom bars the span controls screen width; for left/right bars it controls screen height. The `omarchy bar position`, `omarchy bar transparent`, `omarchy bar move`, and `omarchy bar set` commands do the same from scripts. Enable or disable widgets with `omarchy plugin enable` and `omarchy plugin disable` (widget ids come from `omarchy plugin list`).
 
 Example `shell.json` (bar subtree only shown):
 
@@ -103,6 +103,7 @@ Example `shell.json` (bar subtree only shown):
     "position": "top",
     "size": "standard",
     "shape": "rounded",
+    "length": "full",
     "transparent": false,
     "centerAnchor": "omarchy.clock",
     "layout": {
