@@ -7,6 +7,43 @@ function normalizePosition(value) {
   return /^(top|bottom|left|right)$/.test(next) ? next : "top"
 }
 
+function barPositionOptions() {
+  return [
+    { value: "top", label: "Topo" },
+    { value: "bottom", label: "Inferior" },
+    { value: "left", label: "Esquerda" },
+    { value: "right", label: "Direita" }
+  ]
+}
+
+function normalizeBarSize(value) {
+  var next = String(value || "").trim()
+  return /^(compact|standard|large)$/.test(next) ? next : "standard"
+}
+
+function normalizeBarShape(value) {
+  var next = String(value || "").trim()
+  return /^(square|rounded|pill)$/.test(next) ? next : "rounded"
+}
+
+function barSizeForPreset(preset, baseSize) {
+  var size = Number(baseSize)
+  if (!isFinite(size) || size <= 0) size = 1
+  var normalized = normalizeBarSize(preset)
+  var scale = normalized === "compact" ? 0.8 : normalized === "large" ? 1.25 : 1
+  return Math.max(1, Math.round(size * scale))
+}
+
+function barRadiusForShape(shape, extent, defaultRadius) {
+  var size = Number(extent)
+  if (!isFinite(size) || size < 0) size = 0
+  var normalized = normalizeBarShape(shape)
+  if (normalized === "square") return 0
+  if (normalized === "pill") return Math.round(size / 2)
+  var radius = Number(defaultRadius)
+  return isFinite(radius) ? Math.max(0, radius) : 0
+}
+
 function entrySettings(entry) {
   if (!isPlainObject(entry)) return {}
   var copy = {}
@@ -240,6 +277,11 @@ if (typeof module !== "undefined") {
     pickPanelSlot: pickPanelSlot,
     nearestDropTarget: nearestDropTarget,
     normalizePosition: normalizePosition,
+    barPositionOptions: barPositionOptions,
+    normalizeBarSize: normalizeBarSize,
+    normalizeBarShape: normalizeBarShape,
+    barSizeForPreset: barSizeForPreset,
+    barRadiusForShape: barRadiusForShape,
     entrySettings: entrySettings,
     entryId: entryId,
     pinTrayToInner: pinTrayToInner,

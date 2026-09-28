@@ -59,6 +59,8 @@ Item {
   property bool centerHoverRevealSuppressed: false
   property int barConfigSerial: 0
   property string position: "top"
+  property string sizePreset: "standard"
+  property string shapePreset: "rounded"
   // Resolves through fontconfig at paint time (Style.font.family defaults
   // to "monospace"), so changing the system font (via `omarchy-font-set`)
   // updates the bar without a reload.
@@ -413,6 +415,22 @@ Item {
     }
   }
 
+  function setBarAppearance(key, value) {
+    var next = key === "size"
+      ? BarModel.normalizeBarSize(value)
+      : BarModel.normalizeBarShape(value)
+    if (root.shell && typeof root.shell.mutateShellConfig === "function") {
+      root.shell.mutateShellConfig(function(config) {
+        if (!Util.isPlainObject(config.bar)) config.bar = {}
+        config.bar[key] = next
+      })
+    } else if (key === "size") {
+      root.sizePreset = next
+    } else {
+      root.shapePreset = next
+    }
+  }
+
   function captureBarDragGhost(slot) {
     var item = slot && slot.activeItem ? slot.activeItem : null
     barDragImageUrl = ""
@@ -440,7 +458,13 @@ Item {
   }
 
   readonly property bool vertical: position === "left" || position === "right"
-  readonly property int barSize: vertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal
+  readonly property int barSize: BarModel.barSizeForPreset(
+    sizePreset,
+    vertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal)
+
+  function barCornerRadius(extent) {
+    return BarModel.barRadiusForShape(shapePreset, extent, Style.cornerRadius)
+  }
 
   function normalizePosition(value) {
     return BarModel.normalizePosition(value)
@@ -469,6 +493,8 @@ Item {
     var config = Util.isPlainObject(barConfig) ? barConfig : fallbackBarConfig
 
     position = normalizePosition(config.position)
+    sizePreset = BarModel.normalizeBarSize(config.size)
+    shapePreset = BarModel.normalizeBarShape(config.shape)
     setRequestedTransparency(config.transparent === true)
     centerAnchor = Util.canonicalWidgetId(config.centerAnchor || "")
 
@@ -1155,7 +1181,7 @@ Item {
         Qt.rgba(root.barForeground.r, root.barForeground.g, root.barForeground.b,
           root.transparent ? 0.18 : 0),
         1)
-      radius: Style.cornerRadius
+      radius: root.barCornerRadius(root.barSize)
     }
 
     Loader {
@@ -1252,6 +1278,12 @@ Item {
 
         RightModules {
           anchors.right: parent.right
+          anchors.rightMargin: Style.space(38)
+          anchors.verticalCenter: parent.verticalCenter
+        }
+
+        AppearanceButton {
+          anchors.right: parent.right
           anchors.rightMargin: Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
         }
@@ -1273,6 +1305,12 @@ Item {
         }
 
         RightModules {
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: Style.space(38)
+          anchors.horizontalCenter: parent.horizontalCenter
+        }
+
+        AppearanceButton {
           anchors.bottom: parent.bottom
           anchors.bottomMargin: Style.space(8)
           anchors.horizontalCenter: parent.horizontalCenter
@@ -1324,7 +1362,7 @@ Item {
         anchors.fill: parent
         color: root.transparent ? "transparent" : root.background
         borderSpec: Border.flat(root.barForeground, 1)
-        radius: Math.min(Style.cornerRadius, height / 2)
+        radius: root.barCornerRadius(root.barSize)
         opacity: root.transparent ? 0.45 : 0.94
       }
 
@@ -1386,7 +1424,7 @@ Item {
 
         required property string modelData
         readonly property bool edgeVertical: modelData === "left" || modelData === "right"
-        readonly property int edgeSize: edgeVertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal
+        readonly property int edgeSize: root.barSize
 
         x: modelData === "right" ? parent.width - edgeSize : 0
         y: modelData === "bottom" ? parent.height - edgeSize : 0
@@ -1394,6 +1432,7 @@ Item {
         height: edgeVertical ? parent.height : edgeSize
         color: root.transparent ? "transparent" : root.background
         borderSpec: Border.flat(root.barForeground, 1)
+        radius: root.barCornerRadius(edgeSize)
         visible: opacity > 0
         opacity: root.barMoveCandidate === modelData ? (root.transparent ? 0.45 : 0.7) : 0
 
@@ -1518,6 +1557,302 @@ Item {
           region: "center"
           anchors.top: centerAnchorModule.bottom
           anchors.horizontalCenter: centerAnchorModule.horizontalCenter
+        }
+      }
+    }
+  }
+
+  component AppearanceButton: Item {
+    id: appearanceControl
+
+    implicitWidth: Style.space(28)
+    implicitHeight: root.barSize
+    property bool menuOpen: false
+    readonly property bool tooltipHovered: controlMouse.containsMouse
+
+    BorderSurface {
+      anchors.centerIn: parent
+      width: Math.min(Style.space(24), appearanceControl.height)
+      height: Math.min(Style.space(24), appearanceControl.height)
+      color: controlMouse.containsMouse || appearanceControl.menuOpen
+        ? Style.hoverFillFor(root.foreground, root.foreground) : "transparent"
+      borderSpec: Border.flat("transparent", 0)
+      radius: root.barCornerRadius(height)
+    }
+
+    Repeater {
+      model: [
+        { y: -Style.space(5), knob: Style.space(9) },
+        { y: 0, knob: Style.space(14) },
+        { y: Style.space(5), knob: Style.space(7) }
+      ]
+
+      delegate: Item {
+        anchors.fill: parent
+        required property var modelData
+        readonly property real centerY: appearanceControl.height / 2 + modelData.y
+
+        Rectangle {
+          x: (appearanceControl.width - Style.space(14)) / 2
+          y: parent.centerY
+          width: Style.space(14)
+          height: Math.max(1, Style.space(1))
+          color: root.foreground
+          opacity: 0.8
+        }
+
+        Rectangle {
+          x: (appearanceControl.width - Style.space(5)) / 2 + modelData.knob - Style.space(7)
+          y: parent.centerY - Style.space(2)
+          width: Style.space(5)
+          height: Style.space(5)
+          radius: width / 2
+          color: root.foreground
+        }
+      }
+    }
+
+    MouseArea {
+      id: controlMouse
+      anchors.fill: parent
+      hoverEnabled: true
+      acceptedButtons: Qt.LeftButton
+      cursorShape: Qt.PointingHandCursor
+      onContainsMouseChanged: {
+        if (containsMouse) root.showTooltip(appearanceControl, "Aparência da barra")
+        else root.hideTooltip(appearanceControl)
+      }
+      onClicked: appearanceControl.menuOpen = !appearanceControl.menuOpen
+    }
+
+    PopupWindow {
+      id: appearancePopup
+
+      visible: appearanceControl.menuOpen
+      color: "transparent"
+      implicitWidth: Style.space(220)
+      implicitHeight: appearanceOptions.implicitHeight + Style.space(20)
+
+      anchor {
+        window: root.targetWindow(appearanceControl)
+        adjustment: PopupAdjustment.Slide
+        edges: Edges.Top | Edges.Left
+        gravity: Edges.Bottom | Edges.Right
+        rect.width: 1
+        rect.height: 1
+
+        onAnchoring: {
+          var popupWidth = appearancePopup.implicitWidth
+          var popupHeight = appearancePopup.implicitHeight
+          var localX = appearanceControl.width / 2 - popupWidth / 2
+          var localY = appearanceControl.height + Style.space(6)
+          if (root.position === "bottom") {
+            localY = -popupHeight - Style.space(6)
+          } else if (root.position === "left") {
+            localX = appearanceControl.width + Style.space(6)
+            localY = appearanceControl.height / 2 - popupHeight / 2
+          } else if (root.position === "right") {
+            localX = -popupWidth - Style.space(6)
+            localY = appearanceControl.height / 2 - popupHeight / 2
+          }
+          var point = appearancePopup.anchor.window.contentItem.mapFromItem(appearanceControl, localX, localY)
+          appearancePopup.anchor.rect.x = Math.round(point.x)
+          appearancePopup.anchor.rect.y = Math.round(point.y)
+        }
+      }
+
+      BorderSurface {
+        id: appearanceCard
+        anchors.fill: parent
+        color: Color.tooltip.background
+        borderSpec: Border.surfaceSpec("tooltip", "border", Color.tooltip.border, 1)
+        radius: Style.cornerRadius
+
+        Column {
+          id: appearanceOptions
+          anchors.fill: parent
+          anchors.margins: Style.space(10)
+          spacing: Style.space(4)
+
+          Text {
+            text: "Posição"
+            color: root.foreground
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.body
+            font.bold: true
+          }
+
+          Grid {
+            columns: 2
+            spacing: Style.space(4)
+
+            Repeater {
+              model: BarModel.barPositionOptions()
+
+              delegate: Rectangle {
+                required property var modelData
+                width: (appearanceOptions.width - Style.space(4)) / 2
+                height: Style.space(26)
+                radius: Style.space(4)
+                color: positionMouse.containsMouse ? Style.hoverFillFor(root.foreground, root.foreground) : "transparent"
+
+                Text {
+                  anchors.left: parent.left
+                  anchors.leftMargin: Style.space(8)
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: modelData.label
+                  color: root.foreground
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.body
+                }
+
+                Text {
+                  anchors.right: parent.right
+                  anchors.rightMargin: Style.space(8)
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: root.position === modelData.value ? "✓" : ""
+                  color: root.foreground
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.body
+                }
+
+                MouseArea {
+                  id: positionMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    root.setBarPosition(modelData.value)
+                    appearanceControl.menuOpen = false
+                  }
+                }
+              }
+            }
+          }
+
+          Rectangle {
+            width: appearanceOptions.width
+            height: 1
+            color: root.foreground
+            opacity: 0.2
+          }
+
+          Text {
+            text: "Tamanho da barra"
+            color: root.foreground
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.body
+            font.bold: true
+          }
+
+          Repeater {
+            model: [
+              { value: "compact", label: "Compacta" },
+              { value: "standard", label: "Padrão" },
+              { value: "large", label: "Grande" }
+            ]
+
+            delegate: Rectangle {
+              required property var modelData
+              width: appearanceOptions.width
+              height: Style.space(26)
+              radius: Style.space(4)
+              color: sizeMouse.containsMouse ? Style.hoverFillFor(root.foreground, root.foreground) : "transparent"
+
+              Text {
+                anchors.left: parent.left
+                anchors.leftMargin: Style.space(8)
+                anchors.verticalCenter: parent.verticalCenter
+                text: modelData.label
+                color: root.foreground
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.body
+              }
+
+              Text {
+                anchors.right: parent.right
+                anchors.rightMargin: Style.space(8)
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.sizePreset === modelData.value ? "✓" : ""
+                color: root.foreground
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.body
+              }
+
+              MouseArea {
+                id: sizeMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                  root.setBarAppearance("size", modelData.value)
+                  appearanceControl.menuOpen = false
+                }
+              }
+            }
+          }
+
+          Rectangle {
+            width: appearanceOptions.width
+            height: 1
+            color: root.foreground
+            opacity: 0.2
+          }
+
+          Text {
+            text: "Formato"
+            color: root.foreground
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.body
+            font.bold: true
+          }
+
+          Repeater {
+            model: [
+              { value: "square", label: "Quadrada" },
+              { value: "rounded", label: "Arredondada" },
+              { value: "pill", label: "Pílula" }
+            ]
+
+            delegate: Rectangle {
+              required property var modelData
+              width: appearanceOptions.width
+              height: Style.space(26)
+              radius: Style.space(4)
+              color: shapeMouse.containsMouse ? Style.hoverFillFor(root.foreground, root.foreground) : "transparent"
+
+              Text {
+                anchors.left: parent.left
+                anchors.leftMargin: Style.space(8)
+                anchors.verticalCenter: parent.verticalCenter
+                text: modelData.label
+                color: root.foreground
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.body
+              }
+
+              Text {
+                anchors.right: parent.right
+                anchors.rightMargin: Style.space(8)
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.shapePreset === modelData.value ? "✓" : ""
+                color: root.foreground
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.body
+              }
+
+              MouseArea {
+                id: shapeMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                  root.setBarAppearance("shape", modelData.value)
+                  appearanceControl.menuOpen = false
+                }
+              }
+            }
+          }
         }
       }
     }
