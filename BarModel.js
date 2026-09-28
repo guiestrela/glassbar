@@ -33,44 +33,13 @@ function normalizeBarLength(value) {
 
 function barLengthRatio(value) {
   var preset = normalizeBarLength(value)
-  return preset === "wide" ? 0.8 : preset === "compact" ? 0.5 : 1
+  return preset === "wide" ? 0.8 : preset === "compact" ? 0.6 : 1
 }
 
-function requiredBarSpan(sections, leadingInset, trailingInset, controlSpan, gap) {
-  var values = isPlainObject(sections) ? sections : {}
-  function extent(value) {
-    var next = Number(value)
-    return isFinite(next) && next > 0 ? next : 0
-  }
-
-  var left = extent(values.left)
-  var center = extent(values.center)
-  var right = extent(values.right)
-  var leading = extent(leadingInset)
-  var trailing = extent(trailingInset)
-  var control = extent(controlSpan)
-  var spacing = extent(gap)
-
-  return Math.ceil(Math.max(
-    left + leading + right + trailing + spacing,
-    2 * (left + leading + spacing) + center,
-    2 * (right + trailing + spacing) + center,
-    center + 2 * spacing,
-    control
-  ))
-}
-
-function adaptiveBarSpan(screenSpan, preset, contentSpan) {
+function barLengthInset(screenSpan, preset) {
   var screen = Number(screenSpan)
   if (!isFinite(screen) || screen <= 0) return 0
-  screen = Math.floor(screen)
-
-  var content = Number(contentSpan)
-  if (!isFinite(content) || content < 0) content = 0
-  content = Math.ceil(content)
-
-  var selectedSpan = Math.round(screen * barLengthRatio(preset))
-  return Math.min(screen, Math.max(selectedSpan, content))
+  return Math.max(0, Math.round(Math.floor(screen) * (1 - barLengthRatio(preset)) / 2))
 }
 
 function barSizeForPreset(preset, baseSize) {
@@ -329,8 +298,7 @@ if (typeof module !== "undefined") {
     normalizeBarShape: normalizeBarShape,
     normalizeBarLength: normalizeBarLength,
     barLengthRatio: barLengthRatio,
-    requiredBarSpan: requiredBarSpan,
-    adaptiveBarSpan: adaptiveBarSpan,
+    barLengthInset: barLengthInset,
     barSizeForPreset: barSizeForPreset,
     barRadiusForShape: barRadiusForShape,
     entrySettings: entrySettings,

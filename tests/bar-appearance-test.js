@@ -44,30 +44,31 @@ test("position choices include all four screen edges in menu order", () => {
   ]))
 })
 
-test("bar length presets provide full, 80%, and 50% screen spans", () => {
+test("bar length presets provide full, 80%, and 60% screen spans", () => {
   assert.equal(model.normalizeBarLength("full"), "full")
   assert.equal(model.normalizeBarLength("wide"), "wide")
   assert.equal(model.normalizeBarLength("compact"), "compact")
   assert.equal(model.normalizeBarLength("unknown"), "full")
   assert.equal(model.barLengthRatio("full"), 1)
   assert.equal(model.barLengthRatio("wide"), 0.8)
-  assert.equal(model.barLengthRatio("compact"), 0.5)
+  assert.equal(model.barLengthRatio("compact"), 0.6)
 })
 
-test("adaptive bar span honors the selected width and expands as content grows", () => {
-  assert.equal(model.adaptiveBarSpan(1920, "full", 360), 1920)
-  assert.equal(model.adaptiveBarSpan(1920, "wide", 1200), 1536)
-  assert.equal(model.adaptiveBarSpan(1920, "compact", 800), 960)
-  assert.equal(model.adaptiveBarSpan(1920, "compact", 1100), 1100)
-  assert.equal(model.adaptiveBarSpan(1920, "compact", 2400), 1920)
-  assert.equal(model.adaptiveBarSpan(0, "full", 360), 0)
+test("fixed screen-span insets are calculated independently for each monitor", () => {
+  assert.equal(model.barLengthInset(1920, "full"), 0)
+  assert.equal(model.barLengthInset(1920, "wide"), 192)
+  assert.equal(model.barLengthInset(1920, "compact"), 384)
+  assert.equal(model.barLengthInset(1080, "wide"), 108)
+  assert.equal(model.barLengthInset(1080, "compact"), 216)
 })
 
-test("required bar span grows when section contents grow and keeps sections apart", () => {
-  const compact = model.requiredBarSpan({ left: 100, center: 60, right: 80 }, 8, 38, 36, 8)
-  const moreItems = model.requiredBarSpan({ left: 100, center: 60, right: 140 }, 8, 38, 36, 8)
-  assert.equal(compact, 312)
-  assert.equal(moreItems, 432)
+test("each bar panel uses its own screen span and no content-responsive sizing", () => {
+  assert.ok(/readonly property int screenSpan:[\s\S]*screen\.height[\s\S]*screen\.width/.test(barSource),
+    "each panel reads its own screen dimensions")
+  assert.ok(barSource.includes("readonly property int lengthInset: BarModel.barLengthInset(screenSpan, root.lengthPreset)"),
+    "each panel calculates its inset from its own screen span")
+  assert.ok(!/barContentSpan|adaptiveBarSpan|contentSpan/.test(barSource),
+    "bar width is fixed by the selected screen percentage")
 })
 
 test("bar size selection updates immediately when the solid background is enabled", () => {

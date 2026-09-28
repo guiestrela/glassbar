@@ -471,30 +471,6 @@ Item {
     sizePreset,
     vertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal)
 
-  function barContentSpan(window) {
-    var groups = { left: 0, center: 0, right: 0 }
-    var slots = moduleSlots
-    for (var i = 0; i < slots.length; i++) {
-      var slot = slots[i]
-      if (!slot || slot.visible === false || !slot.activeItem || slot.activeItem.visible === false) continue
-      if (slot.region !== "left" && slot.region !== "center" && slot.region !== "right") continue
-      if (!root.sameWindow(root.slotWindow(slot), window)) continue
-
-      var extent = Number(root.vertical ? slot.height : slot.width)
-      if (isFinite(extent) && extent > 0) groups[slot.region] += extent
-    }
-
-    var controlSpan = root.vertical
-      ? root.barSize + Style.space(8)
-      : Style.space(36)
-    return BarModel.requiredBarSpan(
-      groups,
-      Style.space(8),
-      Style.space(38),
-      controlSpan,
-      Style.space(8))
-  }
-
   function barCornerRadius(extent) {
     return BarModel.barRadiusForShape(shapePreset, extent, Style.cornerRadius)
   }
@@ -1185,11 +1161,7 @@ Item {
     readonly property int screenSpan: root.vertical
       ? (screen ? screen.height : 0)
       : (screen ? screen.width : 0)
-    readonly property int contentSpan: root.barContentSpan(barWindow)
-    readonly property int adaptiveSpan: BarModel.adaptiveBarSpan(
-      screenSpan, root.lengthPreset, contentSpan)
-    readonly property int lengthInset: Math.max(0,
-      Math.round((screenSpan - adaptiveSpan) / 2))
+    readonly property int lengthInset: BarModel.barLengthInset(screenSpan, root.lengthPreset)
 
     margins {
       top: root.barHidden && root.position === "top" ? -root.barSize : (root.vertical ? lengthInset : 0)
@@ -1789,7 +1761,7 @@ Item {
               model: [
                 { value: "full", label: "100%" },
                 { value: "wide", label: "80%" },
-                { value: "compact", label: "50%" }
+                { value: "compact", label: "60%" }
               ]
 
               delegate: Rectangle {
