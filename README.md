@@ -1,6 +1,6 @@
 # Glass Bar
 
-Version: `1.3.1`
+Version: `1.4.0`
 
 A frosted-glass replacement for the Omarchy status bar. The text color follows
 the active theme automatically: dark text on light themes and light text on
