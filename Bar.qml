@@ -425,17 +425,18 @@ Item {
       : key === "shape"
         ? BarModel.normalizeBarShape(value)
         : BarModel.normalizeBarLength(value)
+
+    // Reflect the choice immediately; the host config round-trip can be
+    // asynchronous, and bar thickness must not depend on transparency mode.
+    if (key === "size") root.sizePreset = next
+    else if (key === "shape") root.shapePreset = next
+    else root.lengthPreset = next
+
     if (root.shell && typeof root.shell.mutateShellConfig === "function") {
       root.shell.mutateShellConfig(function(config) {
         if (!Util.isPlainObject(config.bar)) config.bar = {}
         config.bar[key] = next
       })
-    } else if (key === "size") {
-      root.sizePreset = next
-    } else if (key === "shape") {
-      root.shapePreset = next
-    } else {
-      root.lengthPreset = next
     }
   }
 
@@ -470,7 +471,29 @@ Item {
     sizePreset,
     vertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal)
 
-  readonly property real barLengthRatio: BarModel.barLengthRatio(lengthPreset)
+  function barContentSpan(window) {
+    var groups = { left: 0, center: 0, right: 0 }
+    var slots = moduleSlots
+    for (var i = 0; i < slots.length; i++) {
+      var slot = slots[i]
+      if (!slot || slot.visible === false || !slot.activeItem || slot.activeItem.visible === false) continue
+      if (slot.region !== "left" && slot.region !== "center" && slot.region !== "right") continue
+      if (!root.sameWindow(root.slotWindow(slot), window)) continue
+
+      var extent = Number(root.vertical ? slot.height : slot.width)
+      if (isFinite(extent) && extent > 0) groups[slot.region] += extent
+    }
+
+    var controlSpan = root.vertical
+      ? root.barSize + Style.space(8)
+      : Style.space(36)
+    return BarModel.requiredBarSpan(
+      groups,
+      Style.space(8),
+      Style.space(38),
+      controlSpan,
+      Style.space(8))
+  }
 
   function barCornerRadius(extent) {
     return BarModel.barRadiusForShape(shapePreset, extent, Style.cornerRadius)
@@ -1162,8 +1185,11 @@ Item {
     readonly property int screenSpan: root.vertical
       ? (screen ? screen.height : 0)
       : (screen ? screen.width : 0)
+    readonly property int contentSpan: root.barContentSpan(barWindow)
+    readonly property int adaptiveSpan: BarModel.adaptiveBarSpan(
+      screenSpan, root.lengthPreset, contentSpan)
     readonly property int lengthInset: Math.max(0,
-      Math.round(screenSpan * (1 - root.barLengthRatio) / 2))
+      Math.round((screenSpan - adaptiveSpan) / 2))
 
     margins {
       top: root.barHidden && root.position === "top" ? -root.barSize : (root.vertical ? lengthInset : 0)
@@ -1762,8 +1788,8 @@ Item {
             Repeater {
               model: [
                 { value: "full", label: "100%" },
-                { value: "wide", label: "90%" },
-                { value: "compact", label: "80%" }
+                { value: "wide", label: "80%" },
+                { value: "compact", label: "50%" }
               ]
 
               delegate: Rectangle {
