@@ -54,11 +54,12 @@ test("bar length presets provide full, 80%, and 50% screen spans", () => {
   assert.equal(model.barLengthRatio("compact"), 0.5)
 })
 
-test("adaptive bar span follows content and falls back to full screen past the selected limit", () => {
-  assert.equal(model.adaptiveBarSpan(1920, "full", 360), 360)
-  assert.equal(model.adaptiveBarSpan(1920, "wide", 1200), 1200)
-  assert.equal(model.adaptiveBarSpan(1920, "compact", 800), 800)
-  assert.equal(model.adaptiveBarSpan(1920, "compact", 1100), 1920)
+test("adaptive bar span honors the selected width and expands as content grows", () => {
+  assert.equal(model.adaptiveBarSpan(1920, "full", 360), 1920)
+  assert.equal(model.adaptiveBarSpan(1920, "wide", 1200), 1536)
+  assert.equal(model.adaptiveBarSpan(1920, "compact", 800), 960)
+  assert.equal(model.adaptiveBarSpan(1920, "compact", 1100), 1100)
+  assert.equal(model.adaptiveBarSpan(1920, "compact", 2400), 1920)
   assert.equal(model.adaptiveBarSpan(0, "full", 360), 0)
 })
 

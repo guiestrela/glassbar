@@ -69,8 +69,8 @@ function adaptiveBarSpan(screenSpan, preset, contentSpan) {
   if (!isFinite(content) || content < 0) content = 0
   content = Math.ceil(content)
 
-  var selectedLimit = Math.round(screen * barLengthRatio(preset))
-  return content <= selectedLimit ? Math.min(screen, content) : screen
+  var selectedSpan = Math.round(screen * barLengthRatio(preset))
+  return Math.min(screen, Math.max(selectedSpan, content))
 }
 
 function barSizeForPreset(preset, baseSize) {
