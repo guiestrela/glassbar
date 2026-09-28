@@ -35,6 +35,21 @@ test("bar shape presets map to square, theme-rounded, and half-height radii", ()
   assert.equal(model.barRadiusForShape("unknown", 30, 8), 8)
 })
 
+test("solid and glass fills share the rounded bar surface", () => {
+  const start = barSource.indexOf("component BarPanel: PanelWindow {")
+  const end = barSource.indexOf("component DragGhostPanel: PanelWindow {", start)
+  assert.ok(start >= 0 && end > start, "BarPanel source is present")
+  const panelSource = barSource.slice(start, end)
+
+  const windowColor = panelSource.match(/implicitHeight: root\.vertical \? 0 : root\.barSize[\s\S]*?\n    color: ([^\n]+)/)
+  assert.equal(windowColor && windowColor[1].trim(), '"transparent"',
+    "PanelWindow itself must not paint square solid corners")
+  assert.ok(/color: root\.transparent\s*\?[\s\S]*?: root\.background/.test(panelSource),
+    "the rounded child surface paints both glass and solid backgrounds")
+  assert.ok(/radius: root\.barCornerRadius\(root\.barSize\)/.test(panelSource),
+    "the same surface applies the selected shape radius")
+})
+
 test("position choices include all four screen edges in menu order", () => {
   assert.equal(JSON.stringify(model.barPositionOptions()), JSON.stringify([
     { value: "top", label: "Top" },

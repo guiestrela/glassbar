@@ -1179,7 +1179,10 @@ Item {
 
     implicitWidth: root.vertical ? root.barSize : 0
     implicitHeight: root.vertical ? 0 : root.barSize
-    color: root.transparent ? "transparent" : root.background
+    // Keep the native layer surface transparent in both modes. The rounded
+    // BorderSurface below paints the solid or glass fill; an opaque PanelWindow
+    // background would remain square and cover the selected corner radius.
+    color: "transparent"
     surfaceFormat.opaque: false
     WlrLayershell.namespace: "omarchy-bar"
     WlrLayershell.layer: WlrLayer.Top
