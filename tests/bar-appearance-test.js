@@ -34,10 +34,10 @@ test("bar shape presets map to square, theme-rounded, and half-height radii", ()
 
 test("position choices include all four screen edges in menu order", () => {
   assert.equal(JSON.stringify(model.barPositionOptions()), JSON.stringify([
-    { value: "top", label: "Topo" },
-    { value: "bottom", label: "Inferior" },
-    { value: "left", label: "Esquerda" },
-    { value: "right", label: "Direita" }
+    { value: "top", label: "Top" },
+    { value: "bottom", label: "Bottom" },
+    { value: "left", label: "Left" },
+    { value: "right", label: "Right" }
   ]))
 })
 

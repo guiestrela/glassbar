@@ -1692,7 +1692,7 @@ Item {
           spacing: Style.space(4)
 
           Text {
-            text: "Posição"
+            text: "Position"
             color: root.foreground
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
@@ -1748,7 +1748,7 @@ Item {
           }
 
           Text {
-            text: root.vertical ? "Comprimento" : "Largura"
+            text: root.vertical ? "Length" : "Width"
             color: root.foreground
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
@@ -1805,7 +1805,7 @@ Item {
           }
 
           Text {
-            text: "Tamanho da barra"
+            text: "Bar size"
             color: root.foreground
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
@@ -1814,9 +1814,9 @@ Item {
 
           Repeater {
             model: [
-              { value: "compact", label: "Compacta" },
-              { value: "standard", label: "Padrão" },
-              { value: "large", label: "Grande" }
+              { value: "compact", label: "Compact" },
+              { value: "standard", label: "Standard" },
+              { value: "large", label: "Large" }
             ]
 
             delegate: Rectangle {
@@ -1867,7 +1867,7 @@ Item {
           }
 
           Text {
-            text: "Formato"
+            text: "Shape"
             color: root.foreground
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
@@ -1876,9 +1876,9 @@ Item {
 
           Repeater {
             model: [
-              { value: "square", label: "Quadrada" },
-              { value: "rounded", label: "Arredondada" },
-              { value: "pill", label: "Pílula" }
+              { value: "square", label: "Square" },
+              { value: "rounded", label: "Rounded" },
+              { value: "pill", label: "Pill" }
             ]
 
             delegate: Rectangle {
