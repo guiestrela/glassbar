@@ -35,6 +35,11 @@ test("bar shape presets map to square, theme-rounded, and half-height radii", ()
   assert.equal(model.barRadiusForShape("unknown", 30, 8), 8)
 })
 
+test("rounded shape stays visible when the active theme has square corners", () => {
+  assert.equal(model.barRadiusForShape("rounded", 28, 0), 7)
+  assert.equal(model.barRadiusForShape("rounded", 30, 100), 14)
+})
+
 test("solid and glass fills share the rounded bar surface", () => {
   const start = barSource.indexOf("component BarPanel: PanelWindow {")
   const end = barSource.indexOf("component DragGhostPanel: PanelWindow {", start)

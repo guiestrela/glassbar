@@ -57,7 +57,9 @@ function barRadiusForShape(shape, extent, defaultRadius) {
   if (normalized === "square") return 0
   if (normalized === "pill") return Math.round(size / 2)
   var radius = Number(defaultRadius)
-  return isFinite(radius) ? Math.max(0, radius) : 0
+  if (!isFinite(radius) || radius <= 0) radius = Math.round(size * 0.25)
+  var maxRoundedRadius = Math.max(0, Math.floor(size / 2) - 1)
+  return Math.max(0, Math.min(radius, maxRoundedRadius))
 }
 
 function entrySettings(entry) {
